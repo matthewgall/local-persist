@@ -42,6 +42,13 @@ type saveData struct {
 	State map[string]string `json:"state"`
 }
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func newLocalPersistDriver() localPersistDriver {
 	fmt.Printf(white("%-18s", "Starting... "))
 
@@ -190,7 +197,8 @@ func (driver localPersistDriver) findExistingVolumesFromDockerDaemon() (error, m
 	// set up the ability to make API calls to the daemon
 	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
 	// need at least Docker 1.9 (API v1.21) for named Volume support
-	cli, err := client.NewClient("unix:///var/run/docker.sock", "v1.21", nil, defaultHeaders)
+	dockerSocket := getEnv("DOCKER_HOST", "unix:///var/run/docker.sock")
+	cli, err := client.NewClient(dockerSocket, "v1.21", nil, defaultHeaders)
 	if err != nil {
 		return err, map[string]string{}
 	}
